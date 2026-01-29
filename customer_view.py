@@ -14,9 +14,7 @@ from PIL import Image, ImageTk
 import subprocess
 import sys
 
-# -----------------------------
-# STEP 1: Database Initialization
-# -----------------------------
+# database initialisation
 def init_db():
     conn = sqlite3.connect("customers.db")
     cursor = conn.cursor()
@@ -36,9 +34,7 @@ def init_db():
 
 init_db()
 
-# -----------------------------
-# STEP 2: Validation Function
-# -----------------------------
+# validation function
 def validate_inputs(first_name, last_name, email, phone, appointment_date):
     if not re.match(r"^[A-Za-z]+$", first_name):
         return False, "First name should contain letters only."
@@ -52,9 +48,7 @@ def validate_inputs(first_name, last_name, email, phone, appointment_date):
         return False, "Date must be in DD/MM/YYYY format."
     return True, ""
 
-# -----------------------------
-# STEP 3: Database Functions
-# -----------------------------
+# database functions
 def fetch_customers(search_term=""):
     conn = sqlite3.connect("customers.db")
     cursor = conn.cursor()
@@ -119,9 +113,7 @@ def back_to_main_menu():
     subprocess.Popen(["python3", "main_menu.py"])
     root.destroy() #closes window after button pressed
 
-# -----------------------------
-# STEP 4: GUI Setup
-# -----------------------------
+# gui setup
 root = tk.Tk()
 root.title("Customer Manager")
 root.geometry("1000x600")
@@ -161,9 +153,7 @@ def refresh_tree(search_term=""):
 
 refresh_tree()
 
-# -----------------------------
-# STEP 5: Search Entry
-# -----------------------------
+# search entry
 frame = tk.Frame(root)
 frame.pack(pady=10)
 
@@ -180,9 +170,7 @@ tk.Button(frame, text="Edit", command=lambda: open_edit_window()).grid(row=0, co
 tk.Button(frame, text="Delete", command=delete_customer).grid(row=0, column=4, padx=5)
 tk.Button(frame, text="Search", command=search_action).grid(row=0, column=5, padx=5)
 
-# -----------------------------
-# STEP 6: Add Window
-# -----------------------------
+# add window
 def open_add_window():
     add_window = tk.Toplevel(root)
     add_window.title("Add New Customer")
@@ -235,9 +223,7 @@ def open_add_window():
 
     tk.Button(add_window, text="Add Customer", command=submit_add).grid(row=6, column=0, columnspan=2, pady=10)
 
-# -----------------------------
-# STEP 7: Edit Window
-# -----------------------------
+# edit window
 def open_edit_window():
     selected = tree.selection()
     if not selected:
@@ -299,7 +285,5 @@ def open_edit_window():
 
     tk.Button(edit_window, text="Save Changes", command=save_edit).grid(row=6, column=0, columnspan=2, pady=10)
 
-# -----------------------------
-# STEP 8: Run mainloop
-# -----------------------------
+# run program
 root.mainloop()
