@@ -9,12 +9,12 @@ class MainMenu(tk.CTk):
     def __init__(self):
         super().__init__()
 
-        tk.set_appearance_mode("system")
+        tk.set_appearance_mode("system") #sync with system light/dark mode
         tk.set_default_color_theme("dark-blue")
 
 
     
-        self.title("A System")
+        self.title("Cutting Edge Main Menu")
         self.geometry("500x400")
         
         # configure grid layout, create title, logo and buttons
