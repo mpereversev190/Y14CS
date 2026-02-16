@@ -1,0 +1,19 @@
+# Core GUI framework
+customtkinter>=5.2.0
+
+# Image handling - need latest version for Python 3.14
+Pillow>=10.2.0
+
+# Date picker - may need to install from source
+tkcalendar>=1.6.1
+
+# Password hashing - ensure latest version
+bcrypt>=4.1.2
+
+# Environment variables - pure Python, always works
+python-dotenv>=1.0.0
+
+# Additional helpful packages (optional)
+typing-extensions>=4.9.0  # Helps with type hints
+setuptools>=69.0.0        # May help with building from source
+wheel>=0.42.0             # For building wheels
