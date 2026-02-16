@@ -102,9 +102,8 @@ class MainMenu(tk.CTk):
     def staff_management(self):
         """Handle staff management functionality"""
         print("Staff Management clicked!")
-        # uncomment when file made
-        # subprocess.Popen(['python3', 'file_name.py'])
-        # self.destroy()
+        subprocess.Popen(['python3', 'staff_view.py'])
+        self.destroy()
 
     def log_out(self):
         """Handle log out functionality"""
