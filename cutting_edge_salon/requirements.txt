@@ -2,3 +2,9 @@ customtkinter
 packaging
 pillow
 tkcalendar
+
+KNOWN ISSUES:
+- app has to be restarted entirely upon adding a booking if adding payment details immediately
+
+TO ADD:
+- access levels

@@ -12,6 +12,12 @@ class DashboardView(ctk.CTkFrame):
         
         ctk.CTkButton(self, text="Staff Management", 
                       command=lambda: self.controller.show_view("StaffView")).pack(pady=10)
+        
+        ctk.CTkButton(self, text="Booking Management", 
+                       command=lambda: self.controller.show_view("BookingView")).pack(pady=10)
+        
+        ctk.CTkButton(self, text="Payment Management", 
+                      command=lambda: self.controller.show_view("PaymentView")).pack(pady=10)
 
         ctk.CTkButton(self, text="Logout", fg_color="red", 
                       command=lambda: self.controller.show_view("WelcomeView")).pack(pady=20)

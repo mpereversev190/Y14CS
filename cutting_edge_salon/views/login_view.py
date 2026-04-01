@@ -1,35 +1,34 @@
 import customtkinter as ctk
 from tkinter import messagebox
-from PIL import Image  # Required for high-quality image scaling
-import os              # Required to find the file path on your Mac
+from PIL import Image 
+import os            
 
 class LoginView(ctk.CTkFrame):
     def __init__(self, parent, controller):
         super().__init__(parent)
         self.controller = controller
 
-        # --- LOGO LOADING LOGIC ---
+        # logo loading
         try:
-            # This finds the 'assets' folder relative to this file
-            # Go up one level from 'views' to the project root, then into 'assets'
+            # looks for logo file in same directory as code
             base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             logo_path = os.path.join(base_dir, "assets", "logo.png")
 
-            # Create the image object
+            # image
             self.logo_img = ctk.CTkImage(
                 light_image=Image.open(logo_path),
                 dark_image=Image.open(logo_path),
-                size=(150, 150) # You can adjust this size to fit her design
+                size=(150, 150)
             )
 
-            # Display the image in a label
+            # display the image in a label
             self.logo_label = ctk.CTkLabel(self, image=self.logo_img, text="")
-            self.logo_label.pack(pady=(20, 0)) # Spacing at the top
+            self.logo_label.pack(pady=(20, 0)) # spacing at the top
         except Exception as e:
             print(f"DEBUG: Logo could not be loaded: {e}")
-            # If the logo fails, the app will still run without crashing
+            # if the logo fails, the app will still run without crashing
 
-        # --- REST OF HER ORIGINAL UI ---
+        # GUI
         ctk.CTkLabel(self, text="Staff Login", font=("Helvetica", 24, "bold")).pack(pady=20)
 
         self.username_entry = ctk.CTkEntry(self, placeholder_text="Username", width=200)

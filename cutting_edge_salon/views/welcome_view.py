@@ -7,15 +7,15 @@ class WelcomeView(ctk.CTkFrame):
         super().__init__(parent)
         self.controller = controller
 
-        # --- LOGO LOADING LOGIC (Same safe method as Login) ---
+        # load logo
         try:
             base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            logo_path = os.path.join(base_dir, "assets", "logo.png")
+            logo_path = os.path.join(base_dir, "assets", "logo.png") #looks in folder of system 
 
             self.logo_img = ctk.CTkImage(
                 light_image=Image.open(logo_path),
                 dark_image=Image.open(logo_path),
-                size=(250, 250)  # Slightly larger for the welcome screen
+                size=(250, 250)  # slightly larger for the welcome screen
             )
 
             self.logo_label = ctk.CTkLabel(self, image=self.logo_img, text="")
@@ -23,7 +23,7 @@ class WelcomeView(ctk.CTkFrame):
         except Exception as e:
             print(f"DEBUG: Welcome logo error: {e}")
 
-        # --- UI ELEMENTS ---
+        # GUI
         self.label = ctk.CTkLabel(
             self, 
             text="Cutting Edge Salon", 
@@ -38,7 +38,7 @@ class WelcomeView(ctk.CTkFrame):
         )
         self.subtitle.pack(pady=(0, 40))
 
-        # --- NAVIGATION BUTTONS ---
+        # navigation
         self.login_btn = ctk.CTkButton(
             self, 
             text="Staff Login", 
@@ -48,7 +48,6 @@ class WelcomeView(ctk.CTkFrame):
         )
         self.login_btn.pack(pady=10)
 
-        # Optional: Button for customers if she adds that later
         self.exit_btn = ctk.CTkButton(
             self, 
             text="Exit System", 

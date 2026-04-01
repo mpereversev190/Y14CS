@@ -1,5 +1,6 @@
 import customtkinter as ctk
 from tkinter import ttk, messagebox
+import re
 
 class CustomerView(ctk.CTkFrame):
     def __init__(self, parent, controller):
@@ -7,11 +8,10 @@ class CustomerView(ctk.CTkFrame):
         self.controller = controller
         self.selected_user_id = None
 
-        # --- UI LAYOUT ---
-        # Title
+        # UI layout
         ctk.CTkLabel(self, text="Customer Management", font=("Helvetica", 20, "bold")).pack(pady=10)
 
-        # 1. SEARCH SECTION
+        # search section
         search_frame = ctk.CTkFrame(self)
         search_frame.pack(fill="x", padx=20, pady=5)
         
@@ -21,7 +21,7 @@ class CustomerView(ctk.CTkFrame):
         ctk.CTkButton(search_frame, text="Search", width=100, command=self.refresh_data).pack(side="left", padx=5)
         ctk.CTkButton(search_frame, text="Clear", width=100, fg_color="gray", command=self.clear_search).pack(side="left", padx=5)
 
-        # 2. INPUT FORM (For Add/Edit)
+        # input form
         form_frame = ctk.CTkFrame(self)
         form_frame.pack(fill="x", padx=20, pady=10)
 
@@ -33,7 +33,7 @@ class CustomerView(ctk.CTkFrame):
         ctk.CTkEntry(form_frame, placeholder_text="Last Name", textvariable=self.last_name_var).grid(row=0, column=1, padx=10, pady=10)
         ctk.CTkEntry(form_frame, placeholder_text="Email", textvariable=self.email_var).grid(row=0, column=2, padx=10, pady=10)
 
-        # 3. ACTION BUTTONS
+        # action buttons
         btn_frame = ctk.CTkFrame(self, fg_color="transparent")
         btn_frame.pack(fill="x", padx=20)
 
@@ -41,7 +41,7 @@ class CustomerView(ctk.CTkFrame):
         ctk.CTkButton(btn_frame, text="Update Selected", command=self.update_customer).pack(side="left", padx=5)
         ctk.CTkButton(btn_frame, text="Delete Selected", fg_color="red", command=self.delete_customer).pack(side="left", padx=5)
 
-        # 4. DATA TABLE (Treeview)
+        # data table
         self.tree = ttk.Treeview(self, columns=("ID", "First Name", "Last Name", "Email"), show="headings")
         self.tree.heading("ID", text="ID")
         self.tree.heading("First Name", text="First Name")
@@ -49,26 +49,65 @@ class CustomerView(ctk.CTkFrame):
         self.tree.heading("Email", text="Email")
         self.tree.pack(expand=True, fill="both", padx=20, pady=10)
         
-        # Bind click event to populate fields for editing
         self.tree.bind("<<TreeviewSelect>>", self.on_tree_select)
 
         ctk.CTkButton(self, text="Back to Dashboard", command=lambda: self.controller.show_view("DashboardView")).pack(pady=10)
 
         self.refresh_data()
 
-    # --- LOGIC METHODS ---
+    # ---------------- VALIDATION METHOD ---------------- #
+
+    def validate_inputs(self):
+        fn = self.first_name_var.get().strip()
+        ln = self.last_name_var.get().strip()
+        em = self.email_var.get().strip()
+
+        if not fn or not ln or not em:
+            messagebox.showwarning("Invalid Input", "All fields are required.")
+            return False
+
+        if not fn.isalpha():
+            messagebox.showwarning("Invalid Input", "First name must contain letters only.")
+            return False
+
+        if not ln.isalpha():
+            messagebox.showwarning("Invalid Input", "Last name must contain letters only.")
+            return False
+
+        email_pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
+        if not re.match(email_pattern, em):
+            messagebox.showwarning("Invalid Email", "Please enter a valid email address.")
+            return False
+
+        return True
+
+    # ---------------- UNIQUE USERNAME GENERATOR ---------------- #
+
+    def generate_unique_username(self, base_username):
+        username = base_username
+        counter = 1
+
+        self.controller.db.cur.execute("SELECT username FROM users WHERE username=?", (username,))
+        result = self.controller.db.cur.fetchone()
+
+        while result is not None:
+            username = f"{base_username}{counter}"
+            counter += 1
+            self.controller.db.cur.execute("SELECT username FROM users WHERE username=?", (username,))
+            result = self.controller.db.cur.fetchone()
+
+        return username
+
+    # ---------------- LOGIC METHODS ---------------- #
 
     def refresh_data(self):
-        """Fetch customers from DB, optionally using the search term."""
         for item in self.tree.get_children():
             self.tree.delete(item)
         
         search_term = self.search_entry.get()
-        # Uses the fetch_all_customers logic from your DB class
         customers = self.controller.db.fetch_all_customers(search_term)
         
         for c in customers:
-            # c = (user_id, first_name, last_name, email, phone)
             self.tree.insert("", "end", values=(c[0], c[1], c[2], c[3]))
 
     def clear_search(self):
@@ -76,7 +115,6 @@ class CustomerView(ctk.CTkFrame):
         self.refresh_data()
 
     def on_tree_select(self, event):
-        """Fill entry boxes when a row is clicked."""
         selected_item = self.tree.selection()
         if not selected_item:
             return
@@ -88,13 +126,13 @@ class CustomerView(ctk.CTkFrame):
         self.email_var.set(values[3])
 
     def add_customer(self):
-        fn, ln, em = self.first_name_var.get(), self.last_name_var.get(), self.email_var.get()
-        if not (fn and ln and em):
-            messagebox.showwarning("Error", "All fields are required")
+        if not self.validate_inputs():
             return
-        
-        # Simple Logic: Generate a dummy username and password for salon customers
-        username = em.split('@')[0] + "_user"
+
+        fn, ln, em = self.first_name_var.get(), self.last_name_var.get(), self.email_var.get()
+
+        base_username = em.split('@')[0] + "_user"
+        username = self.generate_unique_username(base_username)
         password = self.controller.db.hash_password("password123")
         
         try:
@@ -112,6 +150,9 @@ class CustomerView(ctk.CTkFrame):
         if not self.selected_user_id:
             messagebox.showwarning("Selection", "Please select a customer to update")
             return
+
+        if not self.validate_inputs():
+            return
         
         try:
             self.controller.db.cur.execute("""
@@ -128,7 +169,6 @@ class CustomerView(ctk.CTkFrame):
             return
         
         if messagebox.askyesno("Confirm", "Delete this customer?"):
-            # Uses your existing delete_user method
             self.controller.db.delete_user(self.selected_user_id)
             self.refresh_data()
             self.clear_fields()

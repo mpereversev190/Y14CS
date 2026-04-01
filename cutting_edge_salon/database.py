@@ -4,20 +4,47 @@ import datetime
 from enum import Enum
 from typing import Optional
 
-# --- ADAPTERS AND CONVERTERS ---
-def adapt_date_iso(val): return val.isoformat()
-def adapt_datetime_iso(val): return val.replace(tzinfo=None).isoformat()
+# --- Adapters ---
+def adapt_date_iso(val):
+    return val.isoformat()
+
+def adapt_datetime_iso(val):
+    # Strip timezone if present (SQLite doesn't store tz)
+    return val.replace(tzinfo=None).isoformat()
+
 sqlite3.register_adapter(datetime.date, adapt_date_iso)
 sqlite3.register_adapter(datetime.datetime, adapt_datetime_iso)
 
-def convert_date(val): return datetime.date.fromisoformat(val.decode())
-def convert_datetime(val): return datetime.datetime.fromisoformat(val.decode())
+
+# --- Converters (SAFE) ---
+def convert_date(val):
+    if val is None:
+        return None
+    try:
+        return datetime.date.fromisoformat(val.decode())
+    except Exception:
+        # Return None instead of crashing if the DB contains invalid data
+        return None
+
+
+def convert_datetime(val):
+    if val is None:
+        return None
+
+    s = val.decode()
+
+    # Try your format without seconds
+    try:
+        return datetime.datetime.strptime(s, "%Y-%m-%d %H:%M")
+    except ValueError:
+        return None
+
+
+
 sqlite3.register_converter("date", convert_date)
 sqlite3.register_converter("datetime", convert_datetime)
 
-# ======================
-# ENUMS
-# ======================
+# enums
 class UserRole(Enum):
     customer = "customer"
     staff = "staff"
@@ -37,7 +64,6 @@ class AppointmentStatus(Enum):
 # DATA MODELS
 # ======================
 class User:
-    # Matches your teaching structure: Includes joined_date and last_login
     def __init__(self, user_id, username, password, email, birth_date,
                  joined_date, last_login, role: UserRole, status: UserStatus,
                  first_name=None, last_name=None, phone_number=None):
@@ -50,26 +76,30 @@ class User:
         self.last_login = last_login
         self.role = role
         self.status = status
-        # Salon specific fields
+        #  specific fields
         self.first_name = first_name
         self.last_name = last_name
         self.phone_number = phone_number
 
-# ======================
-# DATABASE CLASS
-# ======================
+def get_role_by_id(self, user_id):
+    self.cur.execute("SELECT role FROM users WHERE user_id=?", (user_id,))
+    row = self.cur.fetchone()
+    return row[0] if row else "Unknown"
+
+
+#database class
 class Database:
     def __init__(self):
-        # 1. Setup the connection first
+        # set up the connection first
         self.conn = sqlite3.connect(
             "salon_database.db",
             detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES,
             check_same_thread=False
         )
-        # 2. Create the cursor second
+        # create the cursor second
         self.cur = self.conn.cursor()
 
-        # 3. NOW call the initialization methods
+        # call the initialization methods
         self.init_db()
 
     def init_db(self):
@@ -78,8 +108,8 @@ class Database:
                 script = file.read()
                 self.cur.executescript(script)
             
-            # --- UPDATED FORCE SYNC ---
-            # We add dummy values for email and names to satisfy the database constraints
+            # updated force sync
+            #add dummy values for email and names to satisfy the database constraints
             admin_pw = self.hash_password("admin123")
             self.cur.execute("""
                 INSERT OR REPLACE INTO users (user_id, username, password, email, role, status, first_name, last_name)
@@ -91,15 +121,11 @@ class Database:
         except Exception as e:
             print(f"DEBUG: SQL Error: {e}")
 
-    # -------------------------
-    # Password hashing
-    # -------------------------
+    # password hashing
     def hash_password(self, password: str):
         return hashlib.sha256(password.encode()).hexdigest()
 
-    # -------------------------
-    # USERS & AUTHENTICATION
-    # -------------------------
+    # users+authentication
     def login(self, username, password):
         hashed_input = self.hash_password(password)
         print(f"DEBUG: Attempting login for: {username}")
@@ -112,7 +138,7 @@ class Database:
         if result:
             print(f"DEBUG: DB Stored Hash:    {result[0]}")
             if result[0] == hashed_input:
-                # If they match, fetch the full user
+                # if they match, fetch the full user
                 q_full = """SELECT user_id, username, password, email, birth_date, 
                                   joined_date, last_login, role, status 
                            FROM users WHERE username=?"""
@@ -150,5 +176,174 @@ class Database:
         self.cur.execute("DELETE FROM users WHERE user_id = ?", (user_id,))
         self.conn.commit()
 
-# Instantiate the DB object exactly as you taught
+    def fetch_customers(self):
+        q = """
+            SELECT user_id, first_name || ' ' || last_name AS full_name
+            FROM users
+            WHERE role = 'customer'
+            ORDER BY first_name
+        """
+        self.cur.execute(q)
+        return self.cur.fetchall()
+    
+    def fetch_appointments_with_prices(self):
+        q = """
+        SELECT 
+            a.appointment_id,
+            a.appointment_datetime,
+            u.first_name || ' ' || u.last_name AS customer_name,
+            s.service_name,
+            s.price
+        FROM appointments a
+        JOIN users u ON a.customer_id = u.user_id
+        JOIN services s ON a.service_id = s.service_id
+        ORDER BY a.appointment_datetime DESC
+    """
+        self.cur.execute(q)
+        return self.cur.fetchall()
+
+    
+    def fetch_all_payments(self, search_term=""):
+        if search_term:
+            q = """
+                SELECT 
+                    p.payment_id,
+                    p.appointment_id,
+                    u.first_name || ' ' || u.last_name AS customer_name,
+                    p.amount,
+                    p.payment_date,
+                    p.payment_method,
+                    p.status
+                FROM payments p
+                JOIN appointments a ON p.appointment_id = a.appointment_id
+                JOIN users u ON a.customer_id = u.user_id
+                WHERE u.first_name LIKE ? OR u.last_name LIKE ?
+                ORDER BY p.payment_date DESC
+            """
+            self.cur.execute(q, ('%' + search_term + '%', '%' + search_term + '%'))
+        else:
+            q = """
+                SELECT 
+                    p.payment_id,
+                    p.appointment_id,
+                    u.first_name || ' ' || u.last_name AS customer_name,
+                    p.amount,
+                    p.payment_date,
+                    p.payment_method,
+                    p.status
+                FROM payments p
+                JOIN appointments a ON p.appointment_id = a.appointment_id
+                JOIN users u ON a.customer_id = u.user_id
+                ORDER BY p.payment_date DESC
+            """
+            self.cur.execute(q)
+
+        return self.cur.fetchall()
+
+
+    def fetch_stylists(self):
+        q = """
+            SELECT user_id, first_name || ' ' || last_name AS full_name
+            FROM users
+            WHERE role IN ('staff', 'stylist')
+            ORDER BY first_name
+        """
+        self.cur.execute(q)
+        return self.cur.fetchall()
+
+
+    def fetch_services(self):
+        q = """
+            SELECT service_id, service_name
+            FROM services
+            ORDER BY service_name
+        """
+        self.cur.execute(q)
+        return self.cur.fetchall()
+
+    def fetch_all_appointments(self, search_term=""):
+        if search_term:
+            q = """
+                SELECT 
+                    a.appointment_id,
+                    a.appointment_datetime,
+                    a.notes,
+                    a.status,
+                    c.first_name || ' ' || c.last_name AS customer_name,
+                    s.first_name || ' ' || s.last_name AS stylist_name,
+                    sv.service_name
+                FROM appointments a
+                JOIN users c ON a.customer_id = c.user_id
+                JOIN users s ON a.stylist_id = s.user_id
+                JOIN services sv ON a.service_id = sv.service_id
+                WHERE c.first_name LIKE ? OR c.last_name LIKE ?
+                ORDER BY a.appointment_datetime
+            """
+            self.cur.execute(q, ('%' + search_term + '%', '%' + search_term + '%'))
+        else:
+            q = """
+                SELECT 
+                    a.appointment_id,
+                    a.appointment_datetime,
+                    a.notes,
+                    a.status,
+                    c.first_name || ' ' || c.last_name AS customer_name,
+                    s.first_name || ' ' || s.last_name AS stylist_name,
+                    sv.service_name
+                FROM appointments a
+                JOIN users c ON a.customer_id = c.user_id
+                JOIN users s ON a.stylist_id = s.user_id
+                JOIN services sv ON a.service_id = sv.service_id
+                ORDER BY a.appointment_datetime
+            """
+            self.cur.execute(q)
+
+        return self.cur.fetchall()
+
+    def delete_appointment(self, appointment_id):
+        self.cur.execute("DELETE FROM appointments WHERE appointment_id = ?", (appointment_id,))
+        self.conn.commit()
+
+
+    def insert_payment(self, appointment_id, amount, method, status,
+                    card_last4=None, card_expiry=None, card_holder=None):
+
+        q = """
+            INSERT INTO payments (
+                appointment_id, amount, payment_method, status,
+                card_last4, card_expiry, card_holder
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """
+
+        self.cur.execute(q, (
+            appointment_id, amount, method, status,
+            card_last4, card_expiry, card_holder
+        ))
+        self.conn.commit()
+
+    def update_payment(self, payment_id, method, status,
+                    card_last4=None, card_expiry=None, card_holder=None):
+
+        q = """
+            UPDATE payments
+            SET payment_method=?, status=?, card_last4=?, card_expiry=?, card_holder=?
+            WHERE payment_id=?
+        """
+
+        self.cur.execute(q, (
+            method, status, card_last4, card_expiry, card_holder, payment_id
+        ))
+        self.conn.commit()
+
+
+    def delete_payment(self, payment_id):
+        self.cur.execute("DELETE FROM payments WHERE payment_id=?", (payment_id,))
+        self.conn.commit()
+
+
+
+
+
+
 db = Database()
