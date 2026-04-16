@@ -6,7 +6,7 @@ class StaffView(ctk.CTkFrame):
     def __init__(self, parent, controller):
         super().__init__(parent)
         self.controller = controller
-                # --- ACCESS CHECK (admin only) ---
+                # access check to make sure user has admin role
         if not self.controller.has_role("admin"):
             messagebox.showerror("Access Denied", "Only admins can access Payment Management.")
             self.controller.show_view("DashboardView")

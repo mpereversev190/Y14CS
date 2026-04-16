@@ -48,7 +48,7 @@ class MainApp(ctk.CTk):
         if not self.current_user:
             return False
 
-        # Convert Enum to string
+        # convert enum to string
         user_role = self.current_user.role.value  
 
         return user_role in roles

@@ -4,12 +4,11 @@ import datetime
 from enum import Enum
 from typing import Optional
 
-# --- Adapters ---
+# --- adapters ---
 def adapt_date_iso(val):
     return val.isoformat()
 
 def adapt_datetime_iso(val):
-    # Strip timezone if present (SQLite doesn't store tz)
     return val.replace(tzinfo=None).isoformat()
 
 sqlite3.register_adapter(datetime.date, adapt_date_iso)
@@ -23,7 +22,7 @@ def convert_date(val):
     try:
         return datetime.date.fromisoformat(val.decode())
     except Exception:
-        # Return None instead of crashing if the DB contains invalid data
+        # return none instead of crashing if the DB contains invalid data
         return None
 
 
@@ -33,7 +32,6 @@ def convert_datetime(val):
 
     s = val.decode()
 
-    # Try your format without seconds
     try:
         return datetime.datetime.strptime(s, "%Y-%m-%d %H:%M")
     except ValueError:
@@ -60,9 +58,7 @@ class AppointmentStatus(Enum):
     completed = "completed"
     cancelled = "cancelled"
 
-# ======================
-# DATA MODELS
-# ======================
+# data models
 class User:
     def __init__(self, user_id, username, password, email, birth_date,
                  joined_date, last_login, role: UserRole, status: UserStatus,

@@ -1,8 +1,6 @@
--- ======================================================
--- CUTTING EDGE HAIR SALON - DATABASE SCHEMA
--- ======================================================
 
--- 1. USERS TABLE
+
+-- 1. users table
 CREATE TABLE IF NOT EXISTS "users" (
     "user_id" INTEGER PRIMARY KEY AUTOINCREMENT,
     "username" TEXT NOT NULL UNIQUE,
@@ -18,7 +16,7 @@ CREATE TABLE IF NOT EXISTS "users" (
     "status" TEXT NOT NULL DEFAULT 'active'
 );
 
--- 2. SERVICES TABLE
+-- 2. services table
 CREATE TABLE IF NOT EXISTS "services" (
     "service_id" INTEGER PRIMARY KEY AUTOINCREMENT,
     "service_name" TEXT NOT NULL,
@@ -27,11 +25,11 @@ CREATE TABLE IF NOT EXISTS "services" (
     "duration_minutes" INTEGER NOT NULL DEFAULT 30
 );
 
--- Prevent duplicate service names
+-- prevent duplicate service names
 CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_service_name
 ON services(service_name);
 
--- 3. APPOINTMENTS TABLE
+-- 3. appointments table
 CREATE TABLE IF NOT EXISTS "appointments" (
     "appointment_id" INTEGER PRIMARY KEY AUTOINCREMENT,
     "customer_id" INTEGER NOT NULL,
@@ -46,7 +44,7 @@ CREATE TABLE IF NOT EXISTS "appointments" (
     FOREIGN KEY("service_id") REFERENCES "services"("service_id")
 );
 
--- 4. PAYMENTS TABLE
+-- 4. payments table
 CREATE TABLE IF NOT EXISTS "payments" (
     "payment_id" INTEGER PRIMARY KEY AUTOINCREMENT,
     "appointment_id" INTEGER NOT NULL,
@@ -58,9 +56,7 @@ CREATE TABLE IF NOT EXISTS "payments" (
     FOREIGN KEY("appointment_id") REFERENCES "appointments"("appointment_id")
 );
 
--- ======================================================
--- INITIAL DATA SEEDING (For Testing)
--- ======================================================
+-- data seed for testing
 
 INSERT OR IGNORE INTO users (username, password, email, role, first_name, last_name) 
 VALUES ('admin', '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918', 'admin@cuttingedge.com', 'admin', 'Salon', 'Manager');

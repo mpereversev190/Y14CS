@@ -17,7 +17,7 @@ try:
     
     for u in users:
         print(f"  > User: {u[0]} | Role: {u[2]}")
-        # Verify if the hash matches admin123
+        # verify if the hash matches admin123
         admin_hash = hashlib.sha256("admin123".encode()).hexdigest()
         if u[1] == admin_hash:
             print("    ✅ Hash matches 'admin123'")

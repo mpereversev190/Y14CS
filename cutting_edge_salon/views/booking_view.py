@@ -10,7 +10,7 @@ class BookingView(ctk.CTkFrame):
 
         ctk.CTkLabel(self, text="Appointment Management", font=("Helvetica", 20, "bold")).pack(pady=10)
 
-        # ---------------- SEARCH BAR ---------------- #
+        # search bar
         search_frame = ctk.CTkFrame(self)
         search_frame.pack(fill="x", padx=20, pady=5)
 
@@ -20,7 +20,7 @@ class BookingView(ctk.CTkFrame):
         ctk.CTkButton(search_frame, text="Search", width=100, command=self.refresh_data).pack(side="left", padx=5)
         ctk.CTkButton(search_frame, text="Clear", width=100, fg_color="gray", command=self.clear_search).pack(side="left", padx=5)
 
-        # ---------------- LOAD DROPDOWN DATA ---------------- #
+        # load dropdown data
         self.customers = self.controller.db.fetch_customers()
         self.stylists = self.controller.db.fetch_stylists()
         self.services = self.controller.db.fetch_services()
@@ -29,7 +29,7 @@ class BookingView(ctk.CTkFrame):
         stylist_names = [s[1] for s in self.stylists]
         service_names = [s[1] for s in self.services]
 
-        # ---------------- INPUT FORM ---------------- #
+        # input form
         form_frame = ctk.CTkFrame(self)
         form_frame.pack(fill="x", padx=20, pady=10)
         
@@ -55,7 +55,7 @@ class BookingView(ctk.CTkFrame):
         ctk.CTkOptionMenu(form_frame, values=stylist_names, variable=self.stylist_var).grid(row=1, column=1, padx=10, pady=10)
         ctk.CTkOptionMenu(form_frame, values=service_names, variable=self.service_var).grid(row=1, column=2, padx=10, pady=10)
 
-        # ---------------- ACTION BUTTONS ---------------- #
+        # action buttons
         btn_frame = ctk.CTkFrame(self, fg_color="transparent")
         btn_frame.pack(fill="x", padx=20)
 
@@ -63,7 +63,7 @@ class BookingView(ctk.CTkFrame):
         ctk.CTkButton(btn_frame, text="Update Selected", command=self.update_appointment).pack(side="left", padx=5)
         ctk.CTkButton(btn_frame, text="Delete Selected", fg_color="red", command=self.delete_appointment).pack(side="left", padx=5)
 
-        # ---------------- TABLE ---------------- #
+        # table
         self.tree = ttk.Treeview(self, columns=("ID", "Date / Time", "Notes", "Status", "Customer", "Stylist", "Service"), show="headings")
         for col in ("ID", "Date / Time", "Notes", "Status", "Customer", "Stylist", "Service"):
             self.tree.heading(col, text=col)
@@ -75,11 +75,11 @@ class BookingView(ctk.CTkFrame):
 
         self.refresh_data()
 
-    # ---------------- VALIDATION ---------------- #
+    # validation
     def validate_inputs(self):
         return True
 
-    # ---------------- DATA METHODS ---------------- #
+    # data methods
     def refresh_data(self):
         for item in self.tree.get_children():
             self.tree.delete(item)
@@ -110,7 +110,7 @@ class BookingView(ctk.CTkFrame):
         self.service_var.set(values[6])
 
     def add_appointment(self):
-        # Auto-fill datetime if empty
+        # auto-fill datetime
         if not self.datetime_var.get().strip():
             now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
             self.datetime_var.set(now)

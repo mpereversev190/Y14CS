@@ -7,7 +7,7 @@ class PaymentView(ctk.CTkFrame):
         
         super().__init__(parent)
         self.controller = controller
-                # --- ACCESS CHECK (admin only) ---
+                # access check to make sure user has admin role
         if not self.controller.has_role("admin"):
             messagebox.showerror("Access Denied", "Only admins can access Payment Management.")
             self.controller.show_view("DashboardView")
@@ -16,7 +16,7 @@ class PaymentView(ctk.CTkFrame):
 
         ctk.CTkLabel(self, text="Payment Management", font=("Helvetica", 20, "bold")).pack(pady=10)
 
-        # ---------------- SEARCH BAR ---------------- #
+        # search bar
         search_frame = ctk.CTkFrame(self)
         search_frame.pack(fill="x", padx=20, pady=5)
 
@@ -26,11 +26,11 @@ class PaymentView(ctk.CTkFrame):
         ctk.CTkButton(search_frame, text="Search", width=100, command=self.refresh_payments).pack(side="left", padx=5)
         ctk.CTkButton(search_frame, text="Clear", width=100, fg_color="gray", command=self.clear_search).pack(side="left", padx=5)
 
-        # ---------------- LOAD APPOINTMENTS ---------------- #
+        # load appointments
         self.appointments = self.controller.db.fetch_appointments_with_prices()
 
         appointment_labels = []
-        self.appointment_map = {}  # label → appointment_id
+        self.appointment_map = {}  # label  appointment_id
 
         for appt in self.appointments:
             appt_id, dt, customer, service, price = appt
@@ -38,7 +38,7 @@ class PaymentView(ctk.CTkFrame):
             appointment_labels.append(label)
             self.appointment_map[label] = appt
 
-        # ---------------- INPUT FORM ---------------- #
+        # input form
         form_frame = ctk.CTkFrame(self)
         form_frame.pack(fill="x", padx=20, pady=10)
 
@@ -49,25 +49,25 @@ class PaymentView(ctk.CTkFrame):
         self.method_var = ctk.StringVar(value="Cash")
         self.status_var = ctk.StringVar(value="pending")
 
-        # Appointment dropdown
+        # appointment dropdown
         ctk.CTkOptionMenu(form_frame, values=appointment_labels, variable=self.appointment_var,
                           command=self.on_appointment_selected).grid(row=0, column=0, padx=10, pady=10)
 
-        # Read-only customer + service
+        # read-only customer + service
         ctk.CTkEntry(form_frame, textvariable=self.customer_var, state="readonly").grid(row=0, column=1, padx=10, pady=10)
         ctk.CTkEntry(form_frame, textvariable=self.service_var, state="readonly").grid(row=0, column=2, padx=10, pady=10)
 
-        # Amount entry
+        # amount entry
         ctk.CTkEntry(form_frame, placeholder_text="Amount (£)", textvariable=self.amount_var).grid(row=1, column=0, padx=10, pady=10)
 
-        # Payment method
+        # payment method
         ctk.CTkOptionMenu(form_frame, values=["Cash", "Card"], variable=self.method_var,
                           command=lambda _: self.toggle_card_details()).grid(row=1, column=1, padx=10, pady=10)
 
-        # Status
+        # status
         ctk.CTkOptionMenu(form_frame, values=["pending", "paid", "refunded"], variable=self.status_var).grid(row=1, column=2, padx=10, pady=10)
 
-        # ---------------- CARD DETAILS ---------------- #
+        # card details (only show if card selected)
         self.card_frame = ctk.CTkFrame(self)
         self.card_frame.pack(fill="x", padx=20, pady=5)
         self.card_frame.pack_forget()  # hidden by default
@@ -83,7 +83,7 @@ class PaymentView(ctk.CTkFrame):
         ctk.CTkEntry(self.card_frame, placeholder_text="Card Holder",
                      textvariable=self.card_holder_var).grid(row=0, column=2, padx=10, pady=5)
 
-        # ---------------- ACTION BUTTONS ---------------- #
+        # action buttons
         btn_frame = ctk.CTkFrame(self, fg_color="transparent")
         btn_frame.pack(fill="x", padx=20)
 
@@ -91,7 +91,7 @@ class PaymentView(ctk.CTkFrame):
         ctk.CTkButton(btn_frame, text="Update Selected", command=self.update_payment).pack(side="left", padx=5)
         ctk.CTkButton(btn_frame, text="Delete Selected", fg_color="red", command=self.delete_payment).pack(side="left", padx=5)
 
-        # ---------------- PAYMENTS TABLE ---------------- #
+        # payments button
         self.tree = ttk.Treeview(
             self,
             columns=("ID", "ApptID", "Customer", "Amount", "Method", "Status", "Date"),
@@ -109,7 +109,7 @@ class PaymentView(ctk.CTkFrame):
 
         self.refresh_payments()
 
-    # ---------------- LOGIC ---------------- #
+    # logic
 
     def on_appointment_selected(self, label):
         appt_id, dt, customer, service, price = self.appointment_map[label]
@@ -117,7 +117,7 @@ class PaymentView(ctk.CTkFrame):
         self.customer_var.set(customer)
         self.service_var.set(service)
 
-        # Auto-fill amount with the service price
+        # auto-fill amount with the service price
         self.amount_var.set(str(price))
 
 
@@ -149,7 +149,7 @@ class PaymentView(ctk.CTkFrame):
         values = self.tree.item(selected)['values']
         self.selected_payment_id = values[0]
 
-        # Load payment details
+        # load payment details
         details = self.controller.db.fetch_payment_details(self.selected_payment_id)
         if not details:
             return

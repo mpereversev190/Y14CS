@@ -55,7 +55,7 @@ class CustomerView(ctk.CTkFrame):
 
         self.refresh_data()
 
-    # ---------------- VALIDATION METHOD ---------------- #
+    # validation method
 
     def validate_inputs(self):
         fn = self.first_name_var.get().strip()
@@ -81,7 +81,7 @@ class CustomerView(ctk.CTkFrame):
 
         return True
 
-    # ---------------- UNIQUE USERNAME GENERATOR ---------------- #
+    # username generator
 
     def generate_unique_username(self, base_username):
         username = base_username
@@ -98,7 +98,7 @@ class CustomerView(ctk.CTkFrame):
 
         return username
 
-    # ---------------- LOGIC METHODS ---------------- #
+    # logic methods
 
     def refresh_data(self):
         for item in self.tree.get_children():
