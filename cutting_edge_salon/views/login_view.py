@@ -50,6 +50,7 @@ class LoginView(ctk.CTkFrame):
         
         if user:
             print("DEBUG: Success!")
+            self.controller.current_user = user
             self.controller.show_view("DashboardView")
         else:
             print("DEBUG: Failed!")

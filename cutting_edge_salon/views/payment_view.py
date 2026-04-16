@@ -4,8 +4,14 @@ import datetime
 
 class PaymentView(ctk.CTkFrame):
     def __init__(self, parent, controller):
+        
         super().__init__(parent)
         self.controller = controller
+                # --- ACCESS CHECK (admin only) ---
+        if not self.controller.has_role("admin"):
+            messagebox.showerror("Access Denied", "Only admins can access Payment Management.")
+            self.controller.show_view("DashboardView")
+            return
         self.selected_payment_id = None
 
         ctk.CTkLabel(self, text="Payment Management", font=("Helvetica", 20, "bold")).pack(pady=10)
