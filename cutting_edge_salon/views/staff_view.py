@@ -6,20 +6,19 @@ class StaffView(ctk.CTkFrame):
     def __init__(self, parent, controller):
         super().__init__(parent)
         self.controller = controller
-                # access check to make sure user has admin role
-        if not self.controller.has_role("admin"):
-            messagebox.showerror("Access Denied", "Only admins can access Payment Management.")
-            self.controller.show_view("DashboardView")
-            return
         self.selected_staff_id = None
 
+        # build UI once
+        self.build_ui()
+
+    def build_ui(self):
         ctk.CTkLabel(self, text="Staff Directory", font=("Helvetica", 20, "bold")).pack(pady=10)
 
         # search bar
         search_frame = ctk.CTkFrame(self)
         search_frame.pack(fill="x", padx=20, pady=5)
 
-        self.search_entry = ctk.CTkEntry(search_frame, placeholder_text="Search by name...") #shows if nothing typed
+        self.search_entry = ctk.CTkEntry(search_frame, placeholder_text="Search by name...")
         self.search_entry.pack(side="left", padx=10, pady=10, expand=True, fill="x")
 
         ctk.CTkButton(search_frame, text="Search", width=100, command=self.refresh_data).pack(side="left", padx=5)
@@ -33,9 +32,9 @@ class StaffView(ctk.CTkFrame):
         self.last_name_var = ctk.StringVar()
         self.phone_var = ctk.StringVar()
 
-        ctk.CTkEntry(form_frame, placeholder_text="First Name", textvariable=self.first_name_var).grid(row=0, column=0, padx=10, pady=10) #shows if no input
-        ctk.CTkEntry(form_frame, placeholder_text="Last Name", textvariable=self.last_name_var).grid(row=0, column=1, padx=10, pady=10)#^
-        ctk.CTkEntry(form_frame, placeholder_text="Phone Number", textvariable=self.phone_var).grid(row=0, column=2, padx=10, pady=10)#^^
+        ctk.CTkEntry(form_frame, placeholder_text="First Name", textvariable=self.first_name_var).grid(row=0, column=0, padx=10, pady=10)
+        ctk.CTkEntry(form_frame, placeholder_text="Last Name", textvariable=self.last_name_var).grid(row=0, column=1, padx=10, pady=10)
+        ctk.CTkEntry(form_frame, placeholder_text="Phone Number", textvariable=self.phone_var).grid(row=0, column=2, padx=10, pady=10)
 
         # action buttons
         btn_frame = ctk.CTkFrame(self, fg_color="transparent")
@@ -58,7 +57,24 @@ class StaffView(ctk.CTkFrame):
         ctk.CTkButton(self, text="Back to Dashboard",
                       command=lambda: self.controller.show_view("DashboardView")).pack(pady=10)
 
-        self.refresh_data()
+    def refresh_data(self):
+        # access check (admin role)
+        if not self.controller.has_role("admin"):
+            messagebox.showerror("Access Denied", "Only admins can access Staff Management.")
+            self.controller.show_view("DashboardView")
+            return
+
+        # clear table
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+
+        search_term = self.search_entry.get()
+        staff_members = self.controller.db.fetch_all_staff(search_term)
+
+        for s in staff_members:
+            full_name = f"{s[1]} {s[2]}"
+            self.tree.insert("", "end", values=(s[0], full_name, s[3], s[4]))
+
 
     # validation
 

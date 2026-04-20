@@ -8,7 +8,6 @@ class DashboardView(ctk.CTkFrame):
         self.build_ui()
 
     def build_ui(self):
-        #fix bug of opening a view first
         for widget in self.winfo_children():
             widget.destroy()
 

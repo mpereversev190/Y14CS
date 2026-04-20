@@ -31,13 +31,6 @@ class WelcomeView(ctk.CTkFrame):
         )
         self.label.pack(pady=20)
 
-        self.subtitle = ctk.CTkLabel(
-            self, 
-            text="Premium Styling & Care", 
-            font=("Helvetica", 16, "italic")
-        )
-        self.subtitle.pack(pady=(0, 40))
-
         # navigation
         self.login_btn = ctk.CTkButton(
             self, 

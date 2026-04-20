@@ -4,16 +4,14 @@ import datetime
 
 class PaymentView(ctk.CTkFrame):
     def __init__(self, parent, controller):
-        
         super().__init__(parent)
         self.controller = controller
-                # access check to make sure user has admin role
-        if not self.controller.has_role("admin"):
-            messagebox.showerror("Access Denied", "Only admins can access Payment Management.")
-            self.controller.show_view("DashboardView")
-            return
         self.selected_payment_id = None
 
+        # build UI
+        self.build_ui()
+
+    def build_ui(self):
         ctk.CTkLabel(self, text="Payment Management", font=("Helvetica", 20, "bold")).pack(pady=10)
 
         # search bar
@@ -28,9 +26,8 @@ class PaymentView(ctk.CTkFrame):
 
         # load appointments
         self.appointments = self.controller.db.fetch_appointments_with_prices()
-
         appointment_labels = []
-        self.appointment_map = {}  # label  appointment_id
+        self.appointment_map = {}
 
         for appt in self.appointments:
             appt_id, dt, customer, service, price = appt
@@ -49,28 +46,23 @@ class PaymentView(ctk.CTkFrame):
         self.method_var = ctk.StringVar(value="Cash")
         self.status_var = ctk.StringVar(value="pending")
 
-        # appointment dropdown
         ctk.CTkOptionMenu(form_frame, values=appointment_labels, variable=self.appointment_var,
                           command=self.on_appointment_selected).grid(row=0, column=0, padx=10, pady=10)
 
-        # read-only customer + service
         ctk.CTkEntry(form_frame, textvariable=self.customer_var, state="readonly").grid(row=0, column=1, padx=10, pady=10)
         ctk.CTkEntry(form_frame, textvariable=self.service_var, state="readonly").grid(row=0, column=2, padx=10, pady=10)
 
-        # amount entry
         ctk.CTkEntry(form_frame, placeholder_text="Amount (£)", textvariable=self.amount_var).grid(row=1, column=0, padx=10, pady=10)
 
-        # payment method
         ctk.CTkOptionMenu(form_frame, values=["Cash", "Card"], variable=self.method_var,
                           command=lambda _: self.toggle_card_details()).grid(row=1, column=1, padx=10, pady=10)
 
-        # status
         ctk.CTkOptionMenu(form_frame, values=["pending", "paid", "refunded"], variable=self.status_var).grid(row=1, column=2, padx=10, pady=10)
 
-        # card details (only show if card selected)
+        # card details
         self.card_frame = ctk.CTkFrame(self)
         self.card_frame.pack(fill="x", padx=20, pady=5)
-        self.card_frame.pack_forget()  # hidden by default
+        self.card_frame.pack_forget()
 
         self.card_number_var = ctk.StringVar()
         self.card_expiry_var = ctk.StringVar()
@@ -83,7 +75,7 @@ class PaymentView(ctk.CTkFrame):
         ctk.CTkEntry(self.card_frame, placeholder_text="Card Holder",
                      textvariable=self.card_holder_var).grid(row=0, column=2, padx=10, pady=5)
 
-        # action buttons
+        # buttons
         btn_frame = ctk.CTkFrame(self, fg_color="transparent")
         btn_frame.pack(fill="x", padx=20)
 
@@ -91,14 +83,14 @@ class PaymentView(ctk.CTkFrame):
         ctk.CTkButton(btn_frame, text="Update Selected", command=self.update_payment).pack(side="left", padx=5)
         ctk.CTkButton(btn_frame, text="Delete Selected", fg_color="red", command=self.delete_payment).pack(side="left", padx=5)
 
-        # payments button
+        # table
         self.tree = ttk.Treeview(
             self,
-            columns=("ID", "ApptID", "Customer", "Amount", "Method", "Status", "Date"),
+            columns=("ID", "ApptID", "Customer", "Amount", "Card", "Method", "Status"),
             show="headings"
         )
 
-        for col in ("ID", "ApptID", "Customer", "Amount", "Method", "Status", "Date"):
+        for col in ("ID", "ApptID", "Customer", "Amount", "Card", "Method", "Status"):
             self.tree.heading(col, text=col)
 
         self.tree.pack(expand=True, fill="both", padx=20, pady=10)
@@ -107,7 +99,16 @@ class PaymentView(ctk.CTkFrame):
         ctk.CTkButton(self, text="Back to Dashboard",
                       command=lambda: self.controller.show_view("DashboardView")).pack(pady=10)
 
+    def refresh_data(self):
+        # access check (admin)
+        if not self.controller.has_role("admin"):
+            messagebox.showerror("Access Denied", "Only admins can access Payment Management.")
+            self.controller.show_view("DashboardView")
+            return
+
+        # reload table
         self.refresh_payments()
+
 
     # logic
 

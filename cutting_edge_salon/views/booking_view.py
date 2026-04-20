@@ -20,20 +20,16 @@ class BookingView(ctk.CTkFrame):
         ctk.CTkButton(search_frame, text="Search", width=100, command=self.refresh_data).pack(side="left", padx=5)
         ctk.CTkButton(search_frame, text="Clear", width=100, fg_color="gray", command=self.clear_search).pack(side="left", padx=5)
 
-        # load dropdown data
-        self.customers = self.controller.db.fetch_customers()
-        self.stylists = self.controller.db.fetch_stylists()
-        self.services = self.controller.db.fetch_services()
-
-        customer_names = [c[1] for c in self.customers]
-        stylist_names = [s[1] for s in self.stylists]
-        service_names = [s[1] for s in self.services]
-
         # input form
         form_frame = ctk.CTkFrame(self)
         form_frame.pack(fill="x", padx=20, pady=10)
-        
+
         self.datetime_var = ctk.StringVar(value="")
+        self.notes_var = ctk.StringVar(value="")
+        self.status_var = ctk.StringVar(value="Booked")
+        self.customer_var = ctk.StringVar()
+        self.stylist_var = ctk.StringVar()
+        self.service_var = ctk.StringVar()
 
         ctk.CTkEntry(
             form_frame,
@@ -41,19 +37,19 @@ class BookingView(ctk.CTkFrame):
             textvariable=self.datetime_var
         ).grid(row=0, column=0, padx=10, pady=10)
 
-
-        self.notes_var = ctk.StringVar(value="")
-        self.status_var = ctk.StringVar(value="Booked")
-        self.customer_var = ctk.StringVar(value=customer_names[0] if customer_names else "")
-        self.stylist_var = ctk.StringVar(value=stylist_names[0] if stylist_names else "")
-        self.service_var = ctk.StringVar(value=service_names[0] if service_names else "")
-
         ctk.CTkEntry(form_frame, placeholder_text="Notes", textvariable=self.notes_var).grid(row=0, column=1, padx=10, pady=10)
 
         ctk.CTkOptionMenu(form_frame, values=["Booked", "Completed", "Cancelled", "No-Show"], variable=self.status_var).grid(row=0, column=2, padx=10, pady=10)
-        ctk.CTkOptionMenu(form_frame, values=customer_names, variable=self.customer_var).grid(row=1, column=0, padx=10, pady=10)
-        ctk.CTkOptionMenu(form_frame, values=stylist_names, variable=self.stylist_var).grid(row=1, column=1, padx=10, pady=10)
-        ctk.CTkOptionMenu(form_frame, values=service_names, variable=self.service_var).grid(row=1, column=2, padx=10, pady=10)
+
+        # dropdowns (values will be filled in refresh_data)
+        self.customer_menu = ctk.CTkOptionMenu(form_frame, values=[], variable=self.customer_var)
+        self.customer_menu.grid(row=1, column=0, padx=10, pady=10)
+
+        self.stylist_menu = ctk.CTkOptionMenu(form_frame, values=[], variable=self.stylist_var)
+        self.stylist_menu.grid(row=1, column=1, padx=10, pady=10)
+
+        self.service_menu = ctk.CTkOptionMenu(form_frame, values=[], variable=self.service_var)
+        self.service_menu.grid(row=1, column=2, padx=10, pady=10)
 
         # action buttons
         btn_frame = ctk.CTkFrame(self, fg_color="transparent")
@@ -74,6 +70,40 @@ class BookingView(ctk.CTkFrame):
         ctk.CTkButton(self, text="Back to Dashboard", command=lambda: self.controller.show_view("DashboardView")).pack(pady=10)
 
         self.refresh_data()
+
+    def refresh_data(self):
+        # reload dropdown data
+        self.customers = self.controller.db.fetch_customers()
+        self.stylists = self.controller.db.fetch_stylists()
+        self.services = self.controller.db.fetch_services()
+
+        customer_names = [c[1] for c in self.customers]
+        stylist_names = [s[1] for s in self.stylists]
+        service_names = [s[1] for s in self.services]
+
+        # update dropdown menus
+        self.customer_menu.configure(values=customer_names)
+        self.stylist_menu.configure(values=stylist_names)
+        self.service_menu.configure(values=service_names)
+
+        # keep current selections if possible
+        if customer_names:
+            self.customer_var.set(customer_names[0])
+        if stylist_names:
+            self.stylist_var.set(stylist_names[0])
+        if service_names:
+            self.service_var.set(service_names[0])
+
+        # refresh table
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+
+        search_term = self.search_entry.get()
+        records = self.controller.db.fetch_all_appointments(search_term)
+
+        for r in records:
+            self.tree.insert("", "end", values=r)
+
 
     # validation
     def validate_inputs(self):
