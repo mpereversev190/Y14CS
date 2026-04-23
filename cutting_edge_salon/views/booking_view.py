@@ -81,12 +81,10 @@ class BookingView(ctk.CTkFrame):
         stylist_names = [s[1] for s in self.stylists]
         service_names = [s[1] for s in self.services]
 
-        # update dropdown menus
         self.customer_menu.configure(values=customer_names)
         self.stylist_menu.configure(values=stylist_names)
         self.service_menu.configure(values=service_names)
 
-        # keep current selections if possible
         if customer_names:
             self.customer_var.set(customer_names[0])
         if stylist_names:
@@ -105,20 +103,28 @@ class BookingView(ctk.CTkFrame):
             self.tree.insert("", "end", values=r)
 
 
+
     # validation
     def validate_inputs(self):
+        dt = self.datetime_var.get().strip()
+
+        if not dt:
+            messagebox.showwarning("Invalid Input", "Date and time cannot be empty.")
+            return False
+
+        try:
+            # check correct format
+            datetime.datetime.strptime(dt, "%Y-%m-%d %H:%M")
+        except ValueError:
+            messagebox.showwarning("Invalid Format", "Please use YYYY-MM-DD HH:MM format.")
+            return False
+
         return True
 
+
+
     # data methods
-    def refresh_data(self):
-        for item in self.tree.get_children():
-            self.tree.delete(item)
 
-        search_term = self.search_entry.get()
-        records = self.controller.db.fetch_all_appointments(search_term)
-
-        for r in records:
-            self.tree.insert("", "end", values=r)
 
     def clear_search(self):
         self.search_entry.delete(0, 'end')
@@ -140,6 +146,8 @@ class BookingView(ctk.CTkFrame):
         self.service_var.set(values[6])
 
     def add_appointment(self):
+        if not self.validate_inputs():
+            return
         # auto-fill datetime
         if not self.datetime_var.get().strip():
             now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
@@ -167,6 +175,9 @@ class BookingView(ctk.CTkFrame):
     def update_appointment(self):
         if not self.selected_appointment_id:
             messagebox.showwarning("Selection", "Please select an appointment to update")
+            return
+        
+        if not self.validate_inputs():
             return
 
         customer_id = next(c[0] for c in self.customers if c[1] == self.customer_var.get())
