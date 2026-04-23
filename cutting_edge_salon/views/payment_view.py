@@ -182,6 +182,17 @@ class PaymentView(ctk.CTkFrame):
             messagebox.showwarning("Invalid", "Amount must be a number")
             return
 
+        # prevent negative or zero amounts
+        if amount <= 0:
+            messagebox.showwarning("Invalid Amount", "Payment amount must be greater than £0.")
+            return
+
+        # optional: prevent unrealistic values
+        if amount > 1000:
+            messagebox.showwarning("Invalid Amount", "Amount is unusually high. Please check the value.")
+            return
+
+
         method = self.method_var.get()
         status = self.status_var.get()
 
@@ -209,6 +220,19 @@ class PaymentView(ctk.CTkFrame):
     def update_payment(self):
         if not self.selected_payment_id:
             messagebox.showwarning("Select", "Select a payment to update")
+            return
+        try:
+            amount = float(self.amount_var.get())
+        except:
+            messagebox.showwarning("Invalid", "Amount must be a number")
+            return
+
+        if amount <= 0:
+            messagebox.showwarning("Invalid Amount", "Payment amount must be greater than £0.")
+            return
+
+        if amount > 1000:
+            messagebox.showwarning("Invalid Amount", "Amount is unusually high. Please check the value.")
             return
 
         method = self.method_var.get()

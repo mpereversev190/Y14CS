@@ -91,17 +91,42 @@ class CreateStaffPopup(ctk.CTkToplevel):
         ctk.CTkButton(self, text="Create Staff", fg_color="green", command=self.create_staff).pack(pady=15)
 
     def create_staff(self):
-        username = self.username_var.get()
-        password = self.password_var.get()
-        first = self.first_var.get()
-        last = self.last_var.get()
-        email = self.email_var.get()
-        phone = self.phone_var.get()
+        username = self.username_var.get().strip()
+        password = self.password_var.get().strip()
+        first = self.first_var.get().strip()
+        last = self.last_var.get().strip()
+        email = self.email_var.get().strip()
+        phone = self.phone_var.get().strip()
 
-        if not username or not password:
-            messagebox.showwarning("Missing Information", "Username and password are required.")
+        # empty field check
+        if not username or not password or not first or not last or not email or not phone:
+            messagebox.showwarning("Missing Information", "All fields are required.")
             return
 
+        # password validation
+        if len(password) < 6:
+            messagebox.showwarning("Weak Password", "Password must be at least 6 characters long.")
+            return
+
+        # email validation
+        if "@" not in email or "." not in email.split("@")[-1]:
+            messagebox.showwarning("Invalid Email", "Please enter a valid email address.")
+            return
+
+        # phone validation
+        if not phone.isdigit():
+            messagebox.showwarning("Invalid Phone Number", "Phone number must contain digits only.")
+            return
+
+        if len(phone) != 11:
+            messagebox.showwarning("Invalid Phone Number", "Phone number must be exactly 11 digits.")
+            return
+
+        if not phone.startswith("07"):
+            messagebox.showwarning("Invalid Phone Number", "Phone number must start with '07'.")
+            return
+
+        # hash password+insert
         hashed_pw = self.controller.db.hash_password(password)
 
         try:
@@ -112,7 +137,7 @@ class CreateStaffPopup(ctk.CTkToplevel):
 
             self.controller.db.conn.commit()
             messagebox.showinfo("Success", "Staff account created successfully.")
-            self.destroy()  # close popup
+            self.destroy()
 
         except Exception as e:
             messagebox.showerror("Error", f"Could not create staff: {e}")

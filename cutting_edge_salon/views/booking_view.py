@@ -104,7 +104,6 @@ class BookingView(ctk.CTkFrame):
 
 
 
-    # validation
     def validate_inputs(self):
         dt = self.datetime_var.get().strip()
 
@@ -112,14 +111,28 @@ class BookingView(ctk.CTkFrame):
             messagebox.showwarning("Invalid Input", "Date and time cannot be empty.")
             return False
 
+        # check correct format
         try:
-            # check correct format
-            datetime.datetime.strptime(dt, "%Y-%m-%d %H:%M")
+            appointment_dt = datetime.datetime.strptime(dt, "%Y-%m-%d %H:%M")
         except ValueError:
             messagebox.showwarning("Invalid Format", "Please use YYYY-MM-DD HH:MM format.")
             return False
 
+        # date range limits
+        today = datetime.datetime.now()
+        max_date = today + datetime.timedelta(days=365)  # 1 year into the future
+        min_date = today - datetime.timedelta(days=1)    # yesterday (prevents past bookings)
+
+        if appointment_dt < min_date:
+            messagebox.showwarning("Invalid Date", "You cannot book an appointment in the past.")
+            return False
+
+        if appointment_dt > max_date:
+            messagebox.showwarning("Invalid Date", "Appointments can only be booked up to 1 year ahead.")
+            return False
+
         return True
+
 
 
 

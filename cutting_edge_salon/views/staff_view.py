@@ -223,3 +223,8 @@ class StaffView(ctk.CTkFrame):
         self.first_name_var.set("")
         self.last_name_var.set("")
         self.phone_var.set("")
+
+def refresh_data(self):
+    if not self.controller.has_role("admin"):
+        self.controller.show_view("DashboardView")
+        return

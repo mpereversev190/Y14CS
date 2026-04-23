@@ -43,10 +43,10 @@ class CustomerView(ctk.CTkFrame):
 
         # data table
         self.tree = ttk.Treeview(self, columns=("ID", "First Name", "Last Name", "Email"), show="headings")
-        self.tree.heading("ID", text="ID")
-        self.tree.heading("First Name", text="First Name")
-        self.tree.heading("Last Name", text="Last Name")
-        self.tree.heading("Email", text="Email")
+        self.tree.heading("ID", text="ID", command=lambda: self.sort_column("ID", False))
+        self.tree.heading("First Name", text="First Name", command=lambda: self.sort_column("First Name", False))
+        self.tree.heading("Last Name", text="Last Name", command=lambda: self.sort_column("Last Name", False))
+        self.tree.heading("Email", text="Email", command=lambda: self.sort_column("Email", False))
         self.tree.pack(expand=True, fill="both", padx=20, pady=10)
         
         self.tree.bind("<<TreeviewSelect>>", self.on_tree_select)
@@ -80,6 +80,23 @@ class CustomerView(ctk.CTkFrame):
             return False
 
         return True
+
+    def sort_column(self, col, reverse):
+        # get all rows
+        data = [(self.tree.set(k, col), k) for k in self.tree.get_children('')]
+
+        # try numeric sort, fallback to string
+        try:
+            data.sort(key=lambda t: float(t[0]), reverse=reverse)
+        except ValueError:
+            data.sort(key=lambda t: t[0].lower(), reverse=reverse)
+
+        # rearrange rows
+        for index, (val, k) in enumerate(data):
+            self.tree.move(k, '', index)
+
+        # toggle sort order next click
+        self.tree.heading(col, command=lambda: self.sort_column(col, not reverse))
 
     # username generator
 
